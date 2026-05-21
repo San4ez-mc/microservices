@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  image-processor:
+    build: ./image-processor
+    container_name: image-processor
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./image-processor/.env
+
+  slide-builder:
+    build: ./slide-builder
+    container_name: slide-builder
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./slide-builder/.env
+    depends_on:
+      - image-processor
+
+  video-processor:
+    build: ./video-processor
+    container_name: video-processor
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./video-processor/.env
+
+  remotion-renderer:
+    build: ./remotion-renderer
+    container_name: remotion-renderer
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./remotion-renderer/.env
+    depends_on:
+      - video-processor
