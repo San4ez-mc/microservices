@@ -1,0 +1,118 @@
+<!doctype html><html><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif}
+.root{width:100%;height:100%;position:relative;display:flex;flex-direction:column}
+.bg-color{position:absolute;inset:0}
+.bg-gen{position:absolute;inset:0}
+.bg-photo{position:absolute;inset:0;background-size:cover;background-position:center;display:none}
+.bg-overlay{position:absolute;inset:0;background:rgba(0,0,0,.48);display:none}
+/* safe zone: top 13vh, bottom 17vh, left 6vw, right 18vw */
+.content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;justify-content:center;padding:13vh 18vw 17vh 6vw;gap:2.8vh}
+/* Pill tag */
+.tag-pill{display:none;align-self:flex-start;border-radius:100px;padding:1.1vh 4.5vw;font-size:2.1vh;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+/* Main plate */
+.main-plate{background:rgba(0,0,0,.72);border-radius:2.8vw;padding:3.2vh 5.5vw;backdrop-filter:blur(2px)}
+.main-text{color:#fff;font-weight:900;line-height:1.05;letter-spacing:-.02em;word-break:break-word}
+/* Arrow */
+.arrow-el{display:none;font-size:5.5vh;padding-left:1.5vw;line-height:1}
+/* Sub plate */
+.sub-plate{display:none;background:rgba(255,255,255,.1);border-radius:2.2vw;padding:2.4vh 5vw;border:1.5px solid rgba(255,255,255,.18)}
+.sub-text{color:#fff;font-size:3.2vh;font-weight:500;line-height:1.45;word-break:break-word}
+/* CTA plate */
+.cta-plate{display:none;border-radius:2.2vw;padding:2.2vh 5vw;align-self:flex-start}
+.cta-text{color:#fff;font-size:3.5vh;font-weight:700;line-height:1.3;word-break:break-word}
+</style></head><body>
+<div class="root">
+  <div class="bg-color" id="bgc"></div>
+  <div class="bg-gen" id="bgg"></div>
+  <div class="bg-photo" id="bgp"></div>
+  <div class="bg-overlay" id="bgo"></div>
+  <div class="content">
+    <div class="tag-pill" id="tag-pill"></div>
+    <div class="main-plate">
+      <div class="main-text" id="main-text"></div>
+    </div>
+    <div class="arrow-el" id="arrow-el"></div>
+    <div class="sub-plate" id="sub-plate">
+      <div class="sub-text" id="sub-text"></div>
+    </div>
+    <div class="cta-plate" id="cta-plate">
+      <div class="cta-text" id="cta-text"></div>
+    </div>
+  </div>
+</div>
+<script>
+const data=__DATA__;
+const bg=data.bgColor||'#0f172a';
+const ac=data.accent||'#3b82f6';
+const fg=data.fgColor||'#ffffff';
+const style=data.bgStyle||'flat';
+
+function hexAlpha(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function shift(h,n){return'#'+[1,3,5].map(i=>Math.min(255,Math.max(0,parseInt(h.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('')}
+
+const bgc=document.getElementById('bgc');
+const bgg=document.getElementById('bgg');
+
+if(data.photoUrl){
+  const bgp=document.getElementById('bgp');
+  bgp.style.display='block';
+  bgp.style.backgroundImage=`url(${data.photoUrl})`;
+  bgp.style.filter='brightness(.42) blur(1px)';
+  document.getElementById('bgo').style.display='block';
+  bgc.style.background='#000';
+} else {
+  bgc.style.background=bg;
+  switch(style){
+    case'gradient':bgc.style.background=`linear-gradient(150deg,${shift(bg,22)} 0%,${bg} 50%,${shift(bg,-30)} 100%)`;break;
+    case'radial':bgg.style.background=`radial-gradient(ellipse at 75% 20%,${hexAlpha(ac,.4)} 0%,transparent 55%)`;break;
+    case'mesh':bgg.style.background=`radial-gradient(at 15% 20%,${hexAlpha(ac,.35)} 0%,transparent 45%),radial-gradient(at 85% 70%,${hexAlpha(shift(ac,60),.25)} 0%,transparent 45%),radial-gradient(at 50% 95%,${hexAlpha(shift(ac,-20),.2)} 0%,transparent 40%)`;break;
+    case'aurora':bgg.style.background=`radial-gradient(at 5% 15%,${hexAlpha(ac,.45)} 0%,transparent 38%),radial-gradient(at 95% 5%,${hexAlpha(shift(ac,90),.3)} 0%,transparent 35%),radial-gradient(at 40% 55%,${hexAlpha(shift(ac,-15),.2)} 0%,transparent 45%),radial-gradient(at 80% 85%,${hexAlpha(shift(ac,50),.22)} 0%,transparent 40%)`;break;
+    case'grid':bgg.style.backgroundImage=`linear-gradient(${hexAlpha('#fff',.04)} 1px,transparent 1px),linear-gradient(90deg,${hexAlpha('#fff',.04)} 1px,transparent 1px)`;bgg.style.backgroundSize='54px 54px';break;
+    case'dots':bgg.style.backgroundImage=`radial-gradient(circle,${hexAlpha('#fff',.13)} 1px,transparent 1px)`;bgg.style.backgroundSize='36px 36px';break;
+  }
+}
+
+document.querySelector('.root').style.color=fg;
+
+// Tag pill
+if(data.tag){
+  const tp=document.getElementById('tag-pill');
+  tp.textContent=data.tag;
+  tp.style.display='inline-block';
+  tp.style.background=ac;
+}
+
+// Main text adaptive font
+const mainEl=document.getElementById('main-text');
+const mainStr=data.title||'';
+mainEl.textContent=mainStr;
+const ml=mainStr.length;
+mainEl.style.fontSize=(ml<25?7.5:ml<50?6:ml<80?5:ml<120?4.2:3.5)+'vh';
+
+// Arrow
+if(data.showArrow==='yes'){
+  const ae=document.getElementById('arrow-el');
+  ae.style.display='block';
+  ae.style.color=ac;
+  ae.textContent='↓';
+}
+
+// Sub plate
+if(data.subtitle){
+  document.getElementById('sub-plate').style.display='block';
+  document.getElementById('sub-text').textContent=data.subtitle;
+}
+
+// CTA plate
+if(data.cta){
+  const cp=document.getElementById('cta-plate');
+  cp.style.display='block';
+  cp.style.background=ac;
+  document.getElementById('cta-text').textContent=data.cta;
+}
+</script>
+</body></html>
