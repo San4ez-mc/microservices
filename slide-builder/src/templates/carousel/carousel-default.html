@@ -3,11 +3,29 @@
 <head>
   <meta charset="utf-8" />
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body { margin: 0; font-family: "Arial", sans-serif; }
-    #row { display: flex; width: max-content; height: 1350px; }
-    .slide { width: 1080px; height: 1350px; box-sizing: border-box; padding: 80px; color: #fff; background: linear-gradient(150deg, #0f172a, #1e293b); border-right: 2px solid #334155; }
-    .title { font-size: 66px; line-height: 1.05; margin-bottom: 30px; font-weight: 800; }
-    .body { font-size: 40px; opacity: 0.95; }
+    #row { display: flex; width: max-content; }
+    .slide {
+      position: relative; overflow: hidden;
+      width: 1080px; height: 1350px;
+      padding: 80px 80px 120px;
+      color: #fff;
+      background: linear-gradient(150deg, #0f172a 0%, #1e293b 100%);
+      border-right: 2px solid #334155;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .slide .sil {
+      position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      max-height: 75%; object-fit: contain; opacity: 0.85; pointer-events: none;
+    }
+    .slide .content {
+      position: relative; z-index: 2;
+    }
+    .title { font-size: 60px; line-height: 1.08; margin-bottom: 20px; font-weight: 800; }
+    .sub   { font-size: 36px; opacity: 0.85; line-height: 1.2; }
+    .brand { position: absolute; bottom: 50px; left: 80px; right: 80px; font-size: 26px; opacity: 0.6; z-index: 2; }
+    .counter { position: absolute; top: 50px; right: 60px; font-size: 26px; opacity: 0.5; z-index: 2; }
   </style>
 </head>
 <body>
@@ -16,13 +34,30 @@
     const data = __DATA__;
     const slides = Array.isArray(data.slides) ? data.slides : [];
     const row = document.getElementById('row');
-    row.style.height = (data.slideHeight || 1350) + 'px';
 
     slides.forEach((s, i) => {
       const el = document.createElement('section');
       el.className = 'slide';
-      el.style.width = (data.slideWidth || 1080) + 'px';
-      el.innerHTML = `<div class="title">${s.title || ''}</div><div class="body">${s.body || ''}</div><div style="position:absolute;bottom:70px;opacity:0.7">${data.brandHandle || ''} • ${i + 1}/${slides.length}</div>`;
+      el.style.width  = (data.slideWidth  || 1080) + 'px';
+      el.style.height = (data.slideHeight || 1350) + 'px';
+
+      const title  = s.text  || s.title  || '';
+      const sub    = s.subText || s.body || '';
+
+      let silHtml = '';
+      if (data.silhouetteImageUrl) {
+        silHtml = `<img class="sil" src="${data.silhouetteImageUrl}" />`;
+      }
+
+      el.innerHTML = `
+        ${silHtml}
+        <div class="counter">${i + 1}/${slides.length}</div>
+        <div class="content">
+          <div class="title">${title}</div>
+          ${sub ? `<div class="sub">${sub}</div>` : ''}
+        </div>
+        <div class="brand">${data.brandHandle || ''}</div>
+      `;
       row.appendChild(el);
     });
   </script>

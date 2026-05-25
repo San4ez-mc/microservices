@@ -1,0 +1,58 @@
+<!doctype html><html><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif;background:#0a0f1e;color:#fff}
+.root{width:100%;height:100%;position:relative;display:flex;flex-direction:column}
+/* subtle bg gradient */
+.bg-grad{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,.12) 0%,transparent 60%),
+  radial-gradient(ellipse at 80% 80%,rgba(29,78,216,.1) 0%,transparent 50%)}
+/* decorative big quote mark behind content */
+.deco-q{position:absolute;right:4vw;top:8vh;font-size:55vw;font-weight:900;color:rgba(255,255,255,.025);
+  font-family:Georgia,serif;line-height:1;user-select:none;pointer-events:none}
+/* safe zone: top 13vh, bottom 17vh, left 6vw, right 18vw */
+.content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding:13vh 18vw 17vh 6vw}
+.brand{font-size:2.4vh;font-weight:700;opacity:.6;letter-spacing:.04em;text-transform:lowercase;margin-bottom:auto}
+.body{display:flex;flex-direction:column;gap:2.5vh}
+/* opening quote mark (visible, accent colored) */
+.qmark{font-size:10vh;line-height:.5;font-family:Georgia,serif;font-weight:900;margin-bottom:1.5vh}
+.quote{font-size:4.8vh;font-weight:700;line-height:1.18}
+.author{font-size:2.6vh;font-weight:400;opacity:.65}
+/* result box */
+.result-box{background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:2vw;padding:2.5vh 3.5vw;
+  display:none;align-self:flex-start;flex-direction:column;gap:.6vh}
+.result-label{font-size:2.1vh;opacity:.85;font-weight:600}
+.result-val{font-size:6.5vh;font-weight:900;line-height:1}
+</style></head><body>
+<div class="root">
+  <div class="bg-grad"></div>
+  <div class="deco-q">&#10077;</div>
+  <div class="content">
+    <div class="brand" id="brand"></div>
+    <div class="body">
+      <div class="qmark" id="qmark">&#10077;</div>
+      <div class="quote" id="quote"></div>
+      <div class="author" id="author"></div>
+      <div class="result-box" id="rb">
+        <div class="result-label" id="rl"></div>
+        <div class="result-val" id="rv"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const data=__DATA__;
+const ac=data.accent||'#3b82f6';
+document.getElementById('qmark').style.color=ac;
+document.getElementById('brand').textContent=data.brandHandle||'';
+document.getElementById('quote').textContent=data.quote||'';
+document.getElementById('author').textContent=data.author||'';
+if(data.result){
+  const rb=document.getElementById('rb');rb.style.display='flex';
+  const parts=data.result.split('|');
+  if(parts.length>1){document.getElementById('rl').textContent=parts[0].trim();document.getElementById('rv').textContent=parts[1].trim();}
+  else{document.getElementById('rv').textContent=parts[0].trim();}
+}
+</script>
+</body></html>

@@ -1,0 +1,93 @@
+<!doctype html><html><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif}
+.root{width:100%;height:100%;position:relative;display:flex;flex-direction:column}
+.bg-color{position:absolute;inset:0}
+.bg-gen{position:absolute;inset:0}
+/* decorative circles (accent) */
+.d1{position:absolute;top:-18vw;right:-15vw;width:60vw;height:60vw;border-radius:50%;opacity:.12}
+.d2{position:absolute;bottom:-12vw;left:-10vw;width:42vw;height:42vw;border-radius:50%;opacity:.08}
+/* safe zone: top 13vh, bottom 17vh, left 6vw, right 18vw */
+.content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding:13vh 18vw 17vh 6vw}
+.brand{font-size:2.4vh;font-weight:700;opacity:.65;letter-spacing:.04em;text-transform:lowercase;margin-bottom:auto}
+.text-block{display:flex;flex-direction:column}
+.al{width:8vw;height:.75vh;border-radius:.4vh;margin-bottom:2.8vh}
+.title{font-size:9vh;font-weight:900;line-height:.93;letter-spacing:-.25vw;margin-bottom:2.5vh;word-break:break-word}
+.plate{background:rgba(0,0,0,.38);border-radius:1.8vw;padding:2.2vh 3vw;display:inline-block;max-width:100%}
+.sub{font-size:3.1vh;font-weight:400;line-height:1.4;opacity:.94}
+</style></head><body>
+<div class="root">
+  <div class="bg-color" id="bgc"></div>
+  <div class="bg-gen" id="bgg"></div>
+  <div class="d1" id="d1"></div>
+  <div class="d2" id="d2"></div>
+  <div class="content">
+    <div class="brand" id="brand"></div>
+    <div class="text-block">
+      <div class="al" id="al"></div>
+      <div class="title" id="title"></div>
+      <div class="plate" id="plate" style="display:none"><div class="sub" id="sub"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+const data=__DATA__;
+const bg=data.bgColor||'#0f172a';
+const ac=data.accent||'#3b82f6';
+const fg=data.fgColor||'#ffffff';
+const style=data.bgStyle||'flat';
+
+function hexAlpha(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function shift(h,n){return'#'+[1,3,5].map(i=>Math.min(255,Math.max(0,parseInt(h.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('')}
+
+const bgc=document.getElementById('bgc');
+const bgg=document.getElementById('bgg');
+const d1=document.getElementById('d1');
+const d2=document.getElementById('d2');
+
+bgc.style.background=bg;
+document.querySelector('.root').style.color=fg;
+d1.style.background=ac;d2.style.background=ac;
+
+switch(style){
+  case'gradient':
+    bgc.style.background=`linear-gradient(150deg,${shift(bg,22)} 0%,${bg} 50%,${shift(bg,-30)} 100%)`;break;
+  case'radial':
+    bgg.style.background=`radial-gradient(ellipse at 75% 20%,${hexAlpha(ac,0.4)} 0%,transparent 55%)`;break;
+  case'mesh':
+    bgg.style.background=`radial-gradient(at 15% 20%,${hexAlpha(ac,0.35)} 0%,transparent 45%),`+
+      `radial-gradient(at 85% 70%,${hexAlpha(shift(ac,60),0.25)} 0%,transparent 45%),`+
+      `radial-gradient(at 50% 95%,${hexAlpha(shift(ac,-20),0.2)} 0%,transparent 40%)`;
+    d1.style.opacity='0.06';d2.style.opacity='0.04';break;
+  case'aurora':
+    bgg.style.background=`radial-gradient(at 5% 15%,${hexAlpha(ac,0.45)} 0%,transparent 38%),`+
+      `radial-gradient(at 95% 5%,${hexAlpha(shift(ac,90),0.3)} 0%,transparent 35%),`+
+      `radial-gradient(at 40% 55%,${hexAlpha(shift(ac,-15),0.2)} 0%,transparent 45%),`+
+      `radial-gradient(at 80% 85%,${hexAlpha(shift(ac,50),0.22)} 0%,transparent 40%)`;
+    d1.style.opacity='0.06';d2.style.opacity='0.04';break;
+  case'grid':
+    bgg.style.backgroundImage=`linear-gradient(${hexAlpha('#fff',0.04)} 1px,transparent 1px),`+
+      `linear-gradient(90deg,${hexAlpha('#fff',0.04)} 1px,transparent 1px)`;
+    bgg.style.backgroundSize='54px 54px';break;
+  case'dots':
+    bgg.style.backgroundImage=`radial-gradient(circle,${hexAlpha('#fff',0.13)} 1px,transparent 1px)`;
+    bgg.style.backgroundSize='36px 36px';
+    d1.style.opacity='0.08';d2.style.opacity='0.05';break;
+}
+
+document.getElementById('al').style.background=ac;
+document.getElementById('brand').textContent=data.brandHandle||'';
+const titleEl=document.getElementById('title');
+const titleStr=data.title||'';
+titleEl.textContent=titleStr;
+(function fitTitle(){
+  const len=titleStr.length;
+  const vh=len<25?9:len<45?7:len<70?6:5;
+  titleEl.style.fontSize=vh+'vh';
+})();
+if(data.subtitle){const p=document.getElementById('plate');p.style.display='inline-block';document.getElementById('sub').textContent=data.subtitle;}
+</script>
+</body></html>

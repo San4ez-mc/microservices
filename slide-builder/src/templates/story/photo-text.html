@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif;color:#fff}
+.root{position:relative;width:100%;height:100%}
+.bg{position:absolute;inset:0;background-size:cover;background-position:center}
+/* dual vignette: dark top (for brand) + dark bottom (for text) */
+.ov-top{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.65) 0%,rgba(0,0,0,.1) 30%,transparent 50%)}
+.ov-bot{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.90) 0%,rgba(0,0,0,.5) 30%,transparent 55%)}
+/* safe zone: top 13vh, bottom 17vh, left 6vw, right 18vw */
+.content{position:relative;z-index:2;width:100%;height:100%;display:flex;flex-direction:column;padding:13vh 18vw 17vh 6vw}
+.brand{font-size:2.4vh;font-weight:700;opacity:.9;letter-spacing:.04em;margin-bottom:auto;text-transform:lowercase;
+  text-shadow:0 1px 8px rgba(0,0,0,.6)}
+.bottom{display:flex;flex-direction:column;gap:1.8vh}
+.title{font-size:7.5vh;font-weight:900;line-height:1.0;letter-spacing:-.2vw;
+  text-shadow:0 2px 24px rgba(0,0,0,.7)}
+.plate{background:rgba(0,0,0,.45);border-radius:1.8vw;padding:2vh 3vw;display:none}
+.sub{font-size:3.1vh;font-weight:400;line-height:1.38;opacity:.94}
+</style></head><body>
+<div class="root">
+  <div class="bg" id="bg"></div>
+  <div class="ov-top"></div>
+  <div class="ov-bot"></div>
+  <div class="content">
+    <div class="brand" id="brand"></div>
+    <div class="bottom">
+      <div class="title" id="title"></div>
+      <div class="plate" id="plate"><div class="sub" id="sub"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+const data=__DATA__;
+document.getElementById('brand').textContent=data.brandHandle||'';
+document.getElementById('title').textContent=data.title||'';
+if(data.subtitle){const p=document.getElementById('plate');p.style.display='block';document.getElementById('sub').textContent=data.subtitle;}
+if(data.photoUrl)document.getElementById('bg').style.backgroundImage='url('+data.photoUrl+')';
+</script>
+</body></html>

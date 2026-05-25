@@ -1,0 +1,70 @@
+<!doctype html><html><head><meta charset="utf-8"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif;color:#fff}
+.root{position:relative;width:100%;height:100%;display:flex;flex-direction:column}
+/* background: photo OR flat color */
+.bg{position:absolute;inset:0;background-size:cover;background-position:center}
+/* overlay when photo: dark gradient from bottom */
+.ov{position:absolute;inset:0;display:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.15) 30%,rgba(0,0,0,.75) 65%,rgba(0,0,0,.92) 100%)}
+/* subtle pattern for flat bg */
+.pattern{position:absolute;inset:0;
+  background:radial-gradient(ellipse at 75% 15%,rgba(255,255,255,.09) 0%,transparent 50%),
+             radial-gradient(ellipse at 20% 85%,rgba(0,0,0,.2) 0%,transparent 45%)}
+/* deco circles */
+.d1{position:absolute;top:-20vw;right:-15vw;width:65vw;height:65vw;border-radius:50%;opacity:.1}
+.d2{position:absolute;bottom:-15vw;left:-12vw;width:48vw;height:48vw;border-radius:50%;opacity:.07}
+/* safe zone: top 13vh, bottom 17vh, left 6vw, right 18vw */
+.content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding:13vh 18vw 17vh 6vw}
+.brand{font-size:2.4vh;font-weight:700;opacity:.8;letter-spacing:.04em;text-transform:lowercase;margin-bottom:auto}
+.main{display:flex;flex-direction:column;gap:2vh}
+.badge{display:none;align-self:flex-start;padding:.9vh 2.5vw;border-radius:3vw;font-size:2.3vh;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.title{font-size:8.5vh;font-weight:900;line-height:.95;letter-spacing:-.22vw}
+.sub{font-size:3.2vh;font-weight:400;line-height:1.35;opacity:.92;display:none}
+.date-row{display:none;align-items:center;gap:1.5vw;font-size:3vh;font-weight:600;opacity:.85}
+.cta-btn{display:none;align-self:flex-start;padding:2.2vh 5vw;border-radius:2vw;font-size:3.5vh;font-weight:800;margin-top:.5vh}
+</style></head><body>
+<div class="root" id="root">
+  <div class="bg" id="bg"></div>
+  <div class="ov" id="ov"></div>
+  <div class="pattern" id="pattern"></div>
+  <div class="d1" id="d1"></div>
+  <div class="d2" id="d2"></div>
+  <div class="content">
+    <div class="brand" id="brand"></div>
+    <div class="main">
+      <div class="badge" id="badge"></div>
+      <div class="title" id="title"></div>
+      <div class="sub" id="sub"></div>
+      <div class="date-row" id="dr">&#128197; <span id="dv"></span></div>
+      <div class="cta-btn" id="cta"></div>
+    </div>
+  </div>
+</div>
+<script>
+const data=__DATA__;
+const ac=data.accent||'#3b82f6';
+const fg=data.fgColor||'#ffffff';
+document.getElementById('root').style.color=fg;
+document.getElementById('d1').style.background=ac;
+document.getElementById('d2').style.background=ac;
+document.getElementById('brand').textContent=data.brandHandle||'';
+document.getElementById('title').textContent=data.title||'';
+if(data.photoUrl){
+  document.getElementById('bg').style.backgroundImage='url('+data.photoUrl+')';
+  document.getElementById('ov').style.display='block';
+  document.getElementById('pattern').style.display='none';
+  document.getElementById('d1').style.display='none';
+  document.getElementById('d2').style.display='none';
+} else {
+  document.getElementById('root').style.background=data.bgColor||'#0f172a';
+}
+if(data.badge){const b=document.getElementById('badge');b.style.display='inline-block';b.style.background=ac;b.textContent=data.badge;}
+if(data.subtitle){const s=document.getElementById('sub');s.style.display='block';s.textContent=data.subtitle;}
+if(data.date){document.getElementById('dr').style.display='flex';document.getElementById('dv').textContent=data.date;}
+if(data.cta){const c=document.getElementById('cta');c.style.display='inline-block';c.style.background=ac;c.style.color=fg;c.textContent=data.cta;}
+</script>
+</body></html>

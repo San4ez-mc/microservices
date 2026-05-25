@@ -9,9 +9,11 @@ router.post("/", async (req, res, next) => {
   try {
     const data = params(req);
     const templateName = data.template || "default";
+    const width  = Number(data.width  || 1080);
+    const height = Number(data.height || 1350);
     const template = await loadTemplate(`story/${templateName}.html`);
     const html = injectData(template, data);
-    const image = await renderHtmlToPng(html, { width: 1080, height: 1350 });
+    const image = await renderHtmlToPng(html, { width, height });
     res.json(ok(req, { contentType: "image/png", imageBase64: image.toString("base64") }));
   } catch (error) {
     next(error);
