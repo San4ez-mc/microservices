@@ -12,8 +12,10 @@ router.post("/", async (req, res, next) => {
     const slideHeight = Number(data.slideHeight || process.env.SLIDE_HEIGHT || 1350);
     const slides = Array.isArray(data.slides) ? data.slides : [];
     const width = slideWidth * Math.max(1, slides.length);
-    const template = await loadTemplate("carousel/carousel-default.html");
-    const html = injectData(template, data);
+    // allow template selection; sanitize to alphanumeric + dash
+    const tplName = (data.template || 'carousel-default').replace(/[^a-z0-9_-]/gi, '');
+    const template = await loadTemplate(`carousel/${tplName}.html`);
+    const html = injectData(template, { ...data, slideWidth, slideHeight });
     const image = await renderHtmlToPng(html, { width, height: slideHeight });
     res.json(ok(req, { contentType: "image/png", imageBase64: image.toString("base64") }));
   } catch (error) {

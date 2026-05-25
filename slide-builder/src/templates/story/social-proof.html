@@ -1,58 +1,119 @@
 <!doctype html><html><head><meta charset="utf-8"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif;background:#0a0f1e;color:#fff}
+body{width:100vw;height:100vh;overflow:hidden;background:#17212b;font-family:'Montserrat','DejaVu Sans',Arial,sans-serif}
 .root{width:100%;height:100%;position:relative;display:flex;flex-direction:column}
-/* subtle bg gradient */
-.bg-grad{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,.12) 0%,transparent 60%),
-  radial-gradient(ellipse at 80% 80%,rgba(29,78,216,.1) 0%,transparent 50%)}
-/* decorative big quote mark behind content */
-.deco-q{position:absolute;right:4vw;top:8vh;font-size:55vw;font-weight:900;color:rgba(255,255,255,.025);
-  font-family:Georgia,serif;line-height:1;user-select:none;pointer-events:none}
-/* safe zone: top 13vh, bottom 17vh, left 6vw, right 18vw */
-.content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding:13vh 18vw 17vh 6vw}
-.brand{font-size:2.4vh;font-weight:700;opacity:.6;letter-spacing:.04em;text-transform:lowercase;margin-bottom:auto}
-.body{display:flex;flex-direction:column;gap:2.5vh}
-/* opening quote mark (visible, accent colored) */
-.qmark{font-size:10vh;line-height:.5;font-family:Georgia,serif;font-weight:900;margin-bottom:1.5vh}
-.quote{font-size:4.8vh;font-weight:700;line-height:1.18}
-.author{font-size:2.6vh;font-weight:400;opacity:.65}
-/* result box */
-.result-box{background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:2vw;padding:2.5vh 3.5vw;
-  display:none;align-self:flex-start;flex-direction:column;gap:.6vh}
-.result-label{font-size:2.1vh;opacity:.85;font-weight:600}
-.result-val{font-size:6.5vh;font-weight:900;line-height:1}
+/* Wallpaper */
+.wp{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.025) 1px,transparent 1px);background-size:26px 26px}
+.wp-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 25% 70%,rgba(43,82,120,.3) 0%,transparent 55%),radial-gradient(ellipse at 80% 15%,rgba(43,82,120,.18) 0%,transparent 45%)}
+/* Header */
+.tg-header{position:relative;z-index:2;padding:13vh 5vw 2.8vh 5vw;display:flex;align-items:center;gap:3.5vw}
+.av{width:11vw;height:11vw;border-radius:50%;background:linear-gradient(135deg,#2b5278,#5ba4ff);display:flex;align-items:center;justify-content:center;font-size:4.5vw;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px}
+.contact{flex:1}
+.cname{font-size:3.8vw;font-weight:700;color:#fff;line-height:1.2}
+.cstatus{font-size:2.5vw;color:#5ba4ff;margin-top:.6vw}
+.hicons{display:flex;gap:3.5vw}
+.hico{width:7.5vw;height:7.5vw;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:3.5vw}
+/* Chat */
+.tg-chat{position:relative;z-index:2;flex:1;padding:1vh 4vw;display:flex;flex-direction:column;justify-content:center;gap:2.5vh}
+/* Date chip */
+.date-div{text-align:center}
+.date-chip{display:inline-block;background:rgba(0,0,0,.38);color:rgba(255,255,255,.55);font-size:2.2vw;padding:.9vh 3vw;border-radius:10vw}
+/* Bubbles */
+.bwrap{display:flex;align-items:flex-end;gap:2vw;max-width:88%}
+.bwrap.out{align-self:flex-end;flex-direction:row-reverse}
+.mini-av{width:8.5vw;height:8.5vw;border-radius:50%;background:linear-gradient(135deg,#2b5278,#5ba4ff);flex-shrink:0}
+.bubble{padding:2vh 4vw;border-radius:4vw;position:relative}
+.bubble.in{background:#202d3b;border-bottom-left-radius:.8vw}
+.bubble.out{background:#2b5278;border-bottom-right-radius:.8vw}
+.b-sender{font-size:2.5vw;font-weight:700;color:#5ba4ff;margin-bottom:1vh}
+.b-text{font-size:3.2vw;font-weight:400;color:#fff;line-height:1.5;word-break:break-word}
+.b-meta{display:flex;align-items:center;justify-content:flex-end;gap:1.5vw;margin-top:1.2vh}
+.b-time{font-size:2.2vw;color:rgba(255,255,255,.45)}
+.b-check{font-size:2.2vw;color:#5ba4ff}
+/* Bottom bar */
+.tg-bottom{position:relative;z-index:2;padding:1.5vh 4vw 17vh 4vw}
+.input-bar{background:#1c2a3a;border-radius:10vw;padding:2.2vh 4vw;display:flex;align-items:center;gap:3vw}
+.ib-icon{font-size:4.5vw;opacity:.4}
+.ib-ph{flex:1;font-size:2.8vw;color:rgba(255,255,255,.28);font-family:inherit}
+.ib-mic{width:9vw;height:9vw;border-radius:50%;background:#2b5278;display:flex;align-items:center;justify-content:center;font-size:4vw}
 </style></head><body>
 <div class="root">
-  <div class="bg-grad"></div>
-  <div class="deco-q">&#10077;</div>
-  <div class="content">
-    <div class="brand" id="brand"></div>
-    <div class="body">
-      <div class="qmark" id="qmark">&#10077;</div>
-      <div class="quote" id="quote"></div>
-      <div class="author" id="author"></div>
-      <div class="result-box" id="rb">
-        <div class="result-label" id="rl"></div>
-        <div class="result-val" id="rv"></div>
+  <div class="wp"></div>
+  <div class="wp-glow"></div>
+  <div class="tg-header">
+    <div class="av" id="av"></div>
+    <div class="contact">
+      <div class="cname" id="cname"></div>
+      <div class="cstatus">online</div>
+    </div>
+    <div class="hicons">
+      <div class="hico" style="color:rgba(255,255,255,.5)">📞</div>
+      <div class="hico" style="font-size:4.5vw;color:rgba(255,255,255,.5);font-weight:700">⋮</div>
+    </div>
+  </div>
+  <div class="tg-chat">
+    <div class="date-div"><span class="date-chip" id="dchip"></span></div>
+    <div class="bwrap" id="bwrap-in">
+      <div class="mini-av"></div>
+      <div class="bubble in">
+        <div class="b-sender" id="bsender"></div>
+        <div class="b-text" id="btext"></div>
+        <div class="b-meta"><span class="b-time" id="btime-in"></span></div>
       </div>
+    </div>
+    <div class="bwrap out" id="bwrap-out" style="display:none">
+      <div class="bubble out">
+        <div class="b-text" id="breply"></div>
+        <div class="b-meta">
+          <span class="b-time" id="btime-out"></span>
+          <span class="b-check">✓✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tg-bottom">
+    <div class="input-bar">
+      <span class="ib-icon">🙂</span>
+      <span class="ib-ph">Повідомлення</span>
+      <span class="ib-icon">📎</span>
+      <div class="ib-mic">🎤</div>
     </div>
   </div>
 </div>
 <script>
 const data=__DATA__;
-const ac=data.accent||'#3b82f6';
-document.getElementById('qmark').style.color=ac;
-document.getElementById('brand').textContent=data.brandHandle||'';
-document.getElementById('quote').textContent=data.quote||'';
-document.getElementById('author').textContent=data.author||'';
-if(data.result){
-  const rb=document.getElementById('rb');rb.style.display='flex';
-  const parts=data.result.split('|');
-  if(parts.length>1){document.getElementById('rl').textContent=parts[0].trim();document.getElementById('rv').textContent=parts[1].trim();}
-  else{document.getElementById('rv').textContent=parts[0].trim();}
+const name=data.author||'Клієнт';
+const msg=data.quote||'';
+const reply=data.result||'';
+const dateStr=data.date||'Сьогодні';
+
+const words=name.split(' ').filter(Boolean);
+const initials=words.slice(0,2).map(w=>w[0].toUpperCase()).join('');
+document.getElementById('av').textContent=initials||name[0]?.toUpperCase()||'?';
+document.getElementById('cname').textContent=name;
+document.getElementById('bsender').textContent=name;
+document.getElementById('dchip').textContent=dateStr;
+
+const now=new Date();
+const hh=now.getHours();
+const mm=String(now.getMinutes()).padStart(2,'0');
+const mm2=String(Math.min(59,now.getMinutes()+2)).padStart(2,'0');
+document.getElementById('btime-in').textContent=hh+':'+mm;
+document.getElementById('btime-out').textContent=hh+':'+mm2;
+
+const btextEl=document.getElementById('btext');
+btextEl.textContent=msg;
+const len=msg.length;
+btextEl.style.fontSize=(len<60?3.8:len<120?3.2:len<200?2.8:2.4)+'vw';
+
+if(reply){
+  document.getElementById('bwrap-out').style.display='flex';
+  const replyEl=document.getElementById('breply');
+  replyEl.textContent=reply;
+  replyEl.style.fontSize=(reply.length<80?3.2:2.8)+'vw';
 }
 </script>
 </body></html>
