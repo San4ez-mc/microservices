@@ -8,7 +8,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu S
 /* base bg color layer */
 .bg-color{position:absolute;inset:0}
 /* optional photo bg */
-.bg-photo{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.4);display:none}
+.bg-photo{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.62);display:none}
 /* generative bg overlay (gradients/patterns) */
 .bg-gen{position:absolute;inset:0}
 /* top dark vignette — ensures title readability over silhouette head */
@@ -94,7 +94,7 @@ titleEl.textContent=titleStr;
 // adaptive font size: shrink for longer titles
 (function fitTitle(){
   const len=titleStr.length;
-  const vh=len<25?8:len<45?6.5:len<70?5.5:4.5;
+  const vh=len<25?6:len<45?5.2:len<70?4.5:3.8;
   titleEl.style.fontSize=vh+'vh';
 })();
 document.getElementById('brand').textContent=data.brandHandle||'';

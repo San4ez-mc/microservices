@@ -52,7 +52,9 @@ document.getElementById('root').style.color=fg;
 document.getElementById('d1').style.background=ac;
 document.getElementById('d2').style.background=ac;
 document.getElementById('brand').textContent=data.brandHandle||'';
-document.getElementById('title').textContent=data.title||'';
+const __titleStr=data.title||'';
+document.getElementById('title').textContent=__titleStr;
+document.getElementById('title').style.fontSize=(__titleStr.length<25?6.5:__titleStr.length<45?5.4:__titleStr.length<70?4.6:3.8)+'vh';
 if(data.photoUrl){
   document.getElementById('bg').style.backgroundImage='url('+data.photoUrl+')';
   document.getElementById('ov').style.display='block';

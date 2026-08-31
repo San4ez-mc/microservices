@@ -14,7 +14,7 @@ body{width:100vw;height:100vh;overflow:hidden;font-family:'Montserrat','DejaVu S
 /* Pill tag */
 .tag-pill{display:none;align-self:flex-start;border-radius:100px;padding:1.1vh 4.5vw;font-size:2.1vh;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff}
 /* Main plate */
-.main-plate{background:rgba(0,0,0,.72);border-radius:2.8vw;padding:3.2vh 5.5vw;backdrop-filter:blur(2px)}
+.main-plate{background:rgba(0,0,0,.58);border-radius:2.8vw;padding:2.2vh 5.5vw;backdrop-filter:blur(2px)}
 .main-text{color:#fff;font-weight:900;line-height:1.05;letter-spacing:-.02em;word-break:break-word}
 /* Arrow */
 .arrow-el{display:none;font-size:5.5vh;padding-left:1.5vw;line-height:1}
@@ -61,8 +61,9 @@ if(data.photoUrl){
   const bgp=document.getElementById('bgp');
   bgp.style.display='block';
   bgp.style.backgroundImage=`url(${data.photoUrl})`;
-  bgp.style.filter='brightness(.42) blur(1px)';
+  bgp.style.filter='brightness(.62)';
   document.getElementById('bgo').style.display='block';
+  document.getElementById('bgo').style.background='rgba(0,0,0,.22)';
   bgc.style.background='#000';
 } else {
   bgc.style.background=bg;
@@ -91,7 +92,7 @@ const mainEl=document.getElementById('main-text');
 const mainStr=data.title||'';
 mainEl.textContent=mainStr;
 const ml=mainStr.length;
-mainEl.style.fontSize=(ml<25?7.5:ml<50?6:ml<80?5:ml<120?4.2:3.5)+'vh';
+mainEl.style.fontSize=(ml<25?5.8:ml<50?4.8:ml<80?4.2:ml<120?3.6:3.1)+'vh';
 
 // Arrow
 if(data.showArrow==='yes'){
