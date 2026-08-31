@@ -6,7 +6,9 @@ const sliceRoute = require("./routes/slice");
 const { err, ok } = require("./utils/mcp");
 
 const app = express();
-app.use(express.json({ limit: "25mb" }));
+// 25mb was fine for flat-color carousels; тепер слайди з реальними фото (галерея проєкту)
+// роблять панораму на 8-10 слайдів помітно важчою — піднято ліміт, щоб /slice не падав 413/500.
+app.use(express.json({ limit: "60mb" }));
 
 app.get("/health", (_req, res) => {
   res.json(ok({ body: {} }, { ok: true, service: "slide-builder" }));
