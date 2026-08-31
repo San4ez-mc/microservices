@@ -1,0 +1,571 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { margin:0; font-family:'Montserrat','DejaVu Sans',Arial,sans-serif; }
+    #row { display:flex; width:max-content; }
+    .slide { position:relative; overflow:hidden; color:#fff; }
+    .s-bg  { position:absolute; inset:0; }
+    .s-bgg { position:absolute; inset:0; }
+    .hand  { font-family:'Caveat','Montserrat','DejaVu Sans',cursive; }
+  </style>
+</head>
+<body>
+  <div id="row"></div>
+  <script>
+    const data = __DATA__;
+    const slides = Array.isArray(data.slides) ? data.slides : [];
+    const row = document.getElementById('row');
+    const sw = data.slideWidth  || 1080;
+    const sh = data.slideHeight || 1350;
+    const bg = data.bgColor || '#0f172a';
+    const ac = data.accent  || '#3b82f6';
+    const fg = data.fgColor || '#ffffff';
+    const bgStyle = data.bgStyle || 'flat';
+    const r  = sw / 1080;
+
+    // ---- shared color helpers (copied verbatim from carousel-story.html) ----
+    function hexAlpha(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+    function shift(h,n){return'#'+[1,3,5].map(i=>Math.min(255,Math.max(0,parseInt(h.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('')}
+
+    function bgStyleCss(bgStyleName, bgHex, accHex){
+      let bgcStyle = `background:${bgHex}`;
+      let bggStyle = '';
+      switch(bgStyleName) {
+        case 'gradient':
+          bgcStyle = `background:linear-gradient(150deg,${shift(bgHex,22)} 0%,${bgHex} 50%,${shift(bgHex,-30)} 100%)`; break;
+        case 'radial':
+          bggStyle = `background:radial-gradient(ellipse at 75% 20%,${hexAlpha(accHex,0.4)} 0%,transparent 55%)`; break;
+        case 'mesh':
+          bggStyle = `background:radial-gradient(at 15% 20%,${hexAlpha(accHex,0.35)} 0%,transparent 45%),`+
+            `radial-gradient(at 85% 70%,${hexAlpha(shift(accHex,60),0.25)} 0%,transparent 45%),`+
+            `radial-gradient(at 50% 95%,${hexAlpha(shift(accHex,-20),0.2)} 0%,transparent 40%)`; break;
+        case 'aurora':
+          bggStyle = `background:radial-gradient(at 5% 15%,${hexAlpha(accHex,0.45)} 0%,transparent 38%),`+
+            `radial-gradient(at 95% 5%,${hexAlpha(shift(accHex,90),0.3)} 0%,transparent 35%),`+
+            `radial-gradient(at 40% 55%,${hexAlpha(shift(accHex,-15),0.2)} 0%,transparent 45%),`+
+            `radial-gradient(at 80% 85%,${hexAlpha(shift(accHex,50),0.22)} 0%,transparent 40%)`; break;
+        case 'grid':
+          bggStyle = `background-image:linear-gradient(${hexAlpha('#fff',0.04)} 1px,transparent 1px),`+
+            `linear-gradient(90deg,${hexAlpha('#fff',0.04)} 1px,transparent 1px);background-size:54px 54px`; break;
+        case 'dots':
+          bggStyle = `background-image:radial-gradient(circle,${hexAlpha('#fff',0.12)} 1px,transparent 1px);background-size:36px 36px`; break;
+      }
+      return { bgcStyle, bggStyle };
+    }
+
+    // ---- small text helpers ----
+    function boldify(str, accHex){ return (str||'').replace(/\*\*(.+?)\*\*/g, '<b style="color:'+accHex+'">$1</b>'); }
+    function highlightWord(str, word, accHex){
+      if(!word) return str||'';
+      const safe = String(word).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      const re = new RegExp('('+safe+')','i');
+      return (str||'').replace(re, '<span style="color:'+accHex+'">$1</span>');
+    }
+    function titleSize(text, rr){
+      const len = (text||'').length;
+      return Math.round((len<20?76:len<40?60:len<70?48:38)*rr);
+    }
+
+    // ---- fragment helper library ----
+    function badgePill(text, ctx, opts){
+      if(!text) return '';
+      opts = opts || {};
+      const bgc = opts.bg || ctx.ac;
+      const fgc = opts.fg || '#fff';
+      const fs = Math.round((opts.fontSize||24)*ctx.r);
+      const pad = Math.round(10*ctx.r)+'px '+Math.round(22*ctx.r)+'px';
+      return `<div style="display:inline-block;background:${bgc};color:${fgc};border-radius:999px;padding:${pad};font-size:${fs}px;font-weight:700;letter-spacing:.03em;">${text}</div>`;
+    }
+
+    function watermarkHtml(ctx){
+      if(!ctx.brandHandle) return '';
+      const fs = Math.round(26*ctx.r);
+      const padB = Math.round(ctx.sh*0.045);
+      const padL = Math.round(ctx.sw*0.07);
+      return `<div style="position:absolute;left:${padL}px;bottom:${padB}px;font-size:${fs}px;font-weight:700;opacity:.55;letter-spacing:.04em;text-transform:lowercase;z-index:5">${ctx.brandHandle}</div>`;
+    }
+
+    function counterHtml(idx, total, ctx){
+      const fs = Math.round(26*ctx.r);
+      return `<div style="position:absolute;top:${Math.round(ctx.sh*0.035)}px;right:${Math.round(ctx.sw*0.045)}px;font-size:${fs}px;font-weight:600;opacity:.5;z-index:5">${idx+1}/${total}</div>`;
+    }
+
+    function photoBgHtml(url, dim){
+      if(!url) return '';
+      dim = (dim==null) ? 0.4 : dim;
+      return `<div style="position:absolute;inset:0;background-image:url(${url});background-size:cover;background-position:center"></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,${dim})"></div>`;
+    }
+
+    function polaroidPhotoHtml(url, caption, ctx, opts){
+      if(!url) return '';
+      opts = opts || {};
+      const w = Math.round((opts.width||420)*ctx.r);
+      const h = Math.round(w*1.15);
+      const rot = (opts.rotate!=null) ? opts.rotate : -4;
+      const left = (opts.left!=null) ? opts.left : Math.round(ctx.sw*0.5-w/2);
+      const top  = (opts.top!=null)  ? opts.top  : Math.round(ctx.sh*0.42);
+      return `<div style="position:absolute;left:${left}px;top:${top}px;width:${w}px;background:#fff;padding:${Math.round(14*ctx.r)}px ${Math.round(14*ctx.r)}px ${Math.round(50*ctx.r)}px;border-radius:6px;box-shadow:0 20px 40px rgba(0,0,0,.35);transform:rotate(${rot}deg);z-index:3">
+        <div style="width:100%;height:${h}px;background-image:url(${url});background-size:cover;background-position:center;border-radius:2px"></div>
+        ${caption?`<div class="hand" style="text-align:center;color:#222;font-size:${Math.round(32*ctx.r)}px;margin-top:${Math.round(6*ctx.r)}px">${caption}</div>`:''}
+      </div>`;
+    }
+
+    function circlePhotoHtml(url, size, posStyle){
+      if(!url) return '';
+      return `<div style="position:absolute;${posStyle};width:${size}px;height:${size}px;border-radius:50%;background-image:url(${url});background-size:cover;background-position:center;border:6px solid rgba(255,255,255,.85);box-shadow:0 12px 30px rgba(0,0,0,.35);z-index:3"></div>`;
+    }
+
+    function cardHtml(inner, opts){
+      opts = opts || {};
+      const cbg = opts.bg || 'rgba(255,255,255,.96)';
+      const color = opts.color || '#1a1a1a';
+      const pos = opts.pos || 'position:relative;';
+      const w = opts.width || 'auto';
+      const radius = (opts.radius!=null) ? opts.radius : 28;
+      const pad = opts.padding || '40px';
+      return `<div style="${pos}${w!=='auto'?`width:${w};`:''}background:${cbg};color:${color};border-radius:${radius}px;padding:${pad};box-shadow:0 20px 50px rgba(0,0,0,.25);${opts.style||''}">${inner}</div>`;
+    }
+
+    function bulletListHtml(items, style, ctx){
+      if(!items || !items.length) return '';
+      style = style || 'plain';
+      const fs = Math.round(30*ctx.r);
+      const gap = Math.round(16*ctx.r);
+      const rows = items.map((it,i)=>{
+        const label = (it && typeof it === 'object') ? (it.label||it.text||'') : it;
+        let prefix = '';
+        if(style==='icon'){
+          const icon = (it && typeof it === 'object' && it.icon) ? it.icon : '✓';
+          prefix = `<span style="display:inline-block;width:${Math.round(36*ctx.r)}px;color:${ctx.ac};font-weight:900;flex:none">${icon}</span>`;
+        } else if(style==='bracket_numbered'){
+          prefix = `<span style="display:inline-block;min-width:${Math.round(46*ctx.r)}px;color:${ctx.ac};font-weight:900;flex:none">[${i+1}]</span>`;
+        } else {
+          prefix = `<span style="display:inline-block;width:${Math.round(20*ctx.r)}px;color:${ctx.ac};flex:none">&mdash;</span>`;
+        }
+        return `<div style="display:flex;align-items:flex-start;gap:${Math.round(10*ctx.r)}px;font-size:${fs}px;line-height:1.35;margin-bottom:${gap}px">${prefix}<span>${label}</span></div>`;
+      }).join('');
+      return `<div>${rows}</div>`;
+    }
+
+    function priceRowHtml(label, value, striped, ctx){
+      const rowBg = striped ? hexAlpha('#000000',0.04) : 'transparent';
+      const fs = Math.round(30*ctx.r);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:${Math.round(18*ctx.r)}px ${Math.round(24*ctx.r)}px;background:${rowBg};font-size:${fs}px">
+        <span style="opacity:.85">${label||''}</span><span style="font-weight:800;color:${ctx.ac}">${value||''}</span>
+      </div>`;
+    }
+
+    function quoteBoxHtml(text, author, ctx){
+      const fs = Math.round(38*ctx.r);
+      const afs = Math.round(24*ctx.r);
+      return `<div style="border-left:${Math.round(6*ctx.r)}px solid ${ctx.ac};padding:${Math.round(6*ctx.r)}px 0 ${Math.round(6*ctx.r)}px ${Math.round(32*ctx.r)}px">
+        <div style="font-size:${fs}px;font-weight:700;line-height:1.32;font-style:italic">&ldquo;${text||''}&rdquo;</div>
+        ${author?`<div style="margin-top:${Math.round(18*ctx.r)}px;font-size:${afs}px;opacity:.7;font-weight:600">&mdash; ${author}</div>`:''}
+      </div>`;
+    }
+
+    function ctaButtonHtml(label, url, ctx){
+      const fs = Math.round(34*ctx.r);
+      const ufs = Math.round(22*ctx.r);
+      return `<div style="display:inline-block;background:${ctx.ac};color:#fff;border-radius:999px;padding:${Math.round(22*ctx.r)}px ${Math.round(48*ctx.r)}px;font-size:${fs}px;font-weight:800;box-shadow:0 16px 40px ${hexAlpha(ctx.ac,.45)}">${label||''}${url?`<div style="font-size:${ufs}px;font-weight:500;opacity:.85;margin-top:4px">${url}</div>`:''}</div>`;
+    }
+
+    function specBoxHtml(label, value, ctx){
+      return `<div style="border:2px solid ${hexAlpha('#000000',.12)};border-radius:16px;padding:${Math.round(20*ctx.r)}px ${Math.round(26*ctx.r)}px;margin-bottom:${Math.round(16*ctx.r)}px">
+        <div style="font-size:${Math.round(22*ctx.r)}px;opacity:.6;font-weight:600;text-transform:uppercase;letter-spacing:.04em">${label||''}</div>
+        <div style="font-size:${Math.round(40*ctx.r)}px;font-weight:900;color:${ctx.ac};margin-top:4px">${value||''}</div>
+      </div>`;
+    }
+
+    function connectorSvgHtml(edge, ctx){
+      const size = Math.round(160*ctx.r);
+      let posStyle = '', pathD = '', w = size, h = Math.round(ctx.sh*0.5);
+      if(edge==='right'){
+        posStyle = `top:${Math.round(ctx.sh*0.25)}px;right:-${Math.round(size*0.4)}px;`;
+        pathD = `M0,0 C ${size},${h*0.25} 0,${h*0.75} ${size},${h}`;
+      } else if(edge==='left'){
+        posStyle = `top:${Math.round(ctx.sh*0.25)}px;left:-${Math.round(size*0.4)}px;`;
+        pathD = `M${size},0 C 0,${h*0.25} ${size},${h*0.75} 0,${h}`;
+      } else if(edge==='top'){
+        w = Math.round(ctx.sw*0.5); h = size;
+        posStyle = `top:-${Math.round(size*0.4)}px;left:${Math.round(ctx.sw*0.25)}px;`;
+        pathD = `M0,${size} C ${w*0.25},0 ${w*0.75},${size} ${w},0`;
+      } else {
+        w = Math.round(ctx.sw*0.5); h = size;
+        posStyle = `bottom:-${Math.round(size*0.4)}px;left:${Math.round(ctx.sw*0.25)}px;`;
+        pathD = `M0,0 C ${w*0.25},${size} ${w*0.75},0 ${w},${size}`;
+      }
+      return `<svg style="position:absolute;${posStyle}z-index:2" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" fill="none">
+        <path d="${pathD}" stroke="${hexAlpha('#ffffff',.55)}" stroke-width="4" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    function overlappingShapesHtml(ctx){
+      return `<div style="position:absolute;top:-${Math.round(ctx.sw*0.15)}px;right:-${Math.round(ctx.sw*0.2)}px;width:${Math.round(ctx.sw*0.55)}px;height:${Math.round(ctx.sw*0.55)}px;border-radius:50%;background:${hexAlpha(ctx.ac,.18)};z-index:0"></div>
+      <div style="position:absolute;bottom:-${Math.round(ctx.sw*0.2)}px;left:-${Math.round(ctx.sw*0.18)}px;width:${Math.round(ctx.sw*0.42)}px;height:${Math.round(ctx.sw*0.42)}px;border-radius:50%;background:${hexAlpha(shift(ctx.ac,40),.14)};z-index:0"></div>`;
+    }
+
+    function swipeArrowHtml(ctx){
+      const fs = Math.round(26*ctx.r);
+      return `<div style="position:absolute;right:${Math.round(ctx.sw*0.06)}px;bottom:${Math.round(ctx.sh*0.045)}px;font-size:${fs}px;font-weight:700;opacity:.85;display:flex;align-items:center;gap:6px;z-index:6"><span>Swipe</span><span style="font-size:${Math.round(fs*1.3)}px">&rarr;</span></div>`;
+    }
+
+    function stickyNoteHtml(headerText, bodyHtmlStr, ctx, opts){
+      opts = opts || {};
+      const rot = (opts.rotate!=null) ? opts.rotate : -2;
+      return `<div style="position:relative;background:#fffef2;color:#2a2a2a;border:2px solid rgba(0,0,0,.12);border-radius:18px;padding:${Math.round(28*ctx.r)}px;transform:rotate(${rot}deg);box-shadow:0 14px 34px rgba(0,0,0,.22);${opts.style||''}">
+        ${headerText?`<div style="display:inline-block;background:${ctx.ac};color:#fff;border-radius:999px;padding:${Math.round(8*ctx.r)}px ${Math.round(20*ctx.r)}px;font-size:${Math.round(22*ctx.r)}px;font-weight:700;margin-bottom:${Math.round(14*ctx.r)}px">${headerText}</div>`:''}
+        <div style="font-size:${Math.round(28*ctx.r)}px;line-height:1.35">${bodyHtmlStr||''}</div>
+        ${opts.stickerLabel?`<div class="hand" style="position:absolute;top:-${Math.round(20*ctx.r)}px;right:-${Math.round(10*ctx.r)}px;transform:rotate(8deg);font-size:${Math.round(30*ctx.r)}px;color:${ctx.ac}">${opts.stickerLabel} &#8599;</div>`:''}
+      </div>`;
+    }
+
+    // ---- role dispatch table ----
+    const ROLE_RENDERERS = {
+      cover: (s, ctx) => { // cover — inspired by carousel-story.html hook slide, extended with optional photo bg
+        const photo = photoBgHtml(s.photoUrl, 0.5);
+        const badge = s.badge ? `<div style="position:absolute;top:${ctx.padTop}px;left:${ctx.padL}px;z-index:3">${badgePill(s.badge, ctx)}</div>` : '';
+        const tSize = titleSize(s.text, ctx.r);
+        return `${photo}${badge}
+          <div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;bottom:${ctx.padBottom}px;z-index:3">
+            <div style="font-size:${tSize}px;font-weight:900;line-height:1.03;letter-spacing:-.01em;text-shadow:0 3px 14px rgba(0,0,0,.6)">${s.text||''}</div>
+          </div>`;
+      },
+      backup_hook: (s, ctx) => { // backup_hook — slide-2 "promise reveal" pattern used across personal-brand carousels
+        const sub = s.subText ? `<div style="font-size:${Math.round(34*ctx.r)}px;font-weight:600;line-height:1.4;margin-top:${Math.round(18*ctx.r)}px;opacity:.92">${s.subText}</div>` : '';
+        const extra = (s.items && s.items.length) ? bulletListHtml(s.items,'plain',ctx) : (s.credibility ? quoteBoxHtml(s.credibility, '', ctx) : '');
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          <div style="font-size:${Math.round(50*ctx.r)}px;font-weight:900;line-height:1.05">${s.text||''}</div>
+          ${sub}
+          <div style="margin-top:${Math.round(34*ctx.r)}px">${extra}</div>
+        </div>`;
+      },
+      list: (s, ctx) => { // list — scannable roadmap/body slide with optional lower-half polaroid photo
+        const photo = polaroidPhotoHtml(s.photoUrl, s.photoCaption, ctx, {top: Math.round(ctx.sh*0.52)});
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          <div style="font-size:${Math.round(50*ctx.r)}px;font-weight:900;line-height:1.06;margin-bottom:${Math.round(28*ctx.r)}px">${s.text||''}</div>
+          ${bulletListHtml(s.items,'plain',ctx)}
+        </div>${photo}`;
+      },
+      photo_numbered: (s, ctx) => { // photo_numbered — full-bleed dimmed photo with bracket-numbered steps overlay
+        const photo = photoBgHtml(s.photoUrl, 0.55);
+        return `${photo}<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;bottom:${ctx.padBottom}px;z-index:3">
+          ${s.text?`<div style="font-size:${Math.round(42*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(24*ctx.r)}px">${s.text}</div>`:''}
+          ${bulletListHtml(s.items,'bracket_numbered',ctx)}
+        </div>`;
+      },
+      quote: (s, ctx) => { // quote — testimonial/thought slide, quote box borrowed from typographic devices
+        const photo = s.photoUrl ? `<div style="position:absolute;inset:0;opacity:.18;z-index:0">${photoBgHtml(s.photoUrl,0)}</div>` : '';
+        return `${photo}<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:50%;transform:translateY(-50%);z-index:3">
+          ${s.text?`<div style="font-size:${Math.round(34*ctx.r)}px;font-weight:600;margin-bottom:${Math.round(26*ctx.r)}px;opacity:.85">${s.text}</div>`:''}
+          ${quoteBoxHtml(s.quote, s.quoteAuthor, ctx)}
+        </div>`;
+      },
+      photo_portrait: (s, ctx) => { // photo_portrait — light-dim portrait + curve connector, pairs with photo_portrait_cont
+        const photo = photoBgHtml(s.photoUrl, 0.3);
+        return `${photo}
+          <div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;bottom:${ctx.padBottom}px;z-index:3">
+            <div style="font-size:${Math.round(42*ctx.r)}px;font-weight:800;text-shadow:0 3px 12px rgba(0,0,0,.6)">${s.text||''}</div>
+          </div>
+          ${connectorSvgHtml('right', ctx)}`;
+      },
+      photo_portrait_cont: (s, ctx) => { // photo_portrait_cont — mirror half of photo_portrait, matching edge curve
+        return `${connectorSvgHtml('left', ctx)}
+          <div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+            <div style="font-size:${Math.round(40*ctx.r)}px;font-weight:800;line-height:1.2">${s.connectorText||''}</div>
+            <div style="margin-top:${Math.round(24*ctx.r)}px">${bulletListHtml(s.items,'plain',ctx)}</div>
+          </div>`;
+      },
+      audience_grid: (s, ctx) => { // audience_grid — "who this is for" 2-col icon grid, common hook-slide device
+        const items = s.items || [];
+        const cellFs = Math.round(28*ctx.r);
+        const cells = items.map(it => `
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:${Math.round(10*ctx.r)}px;padding:${Math.round(22*ctx.r)}px;border:2px solid ${hexAlpha('#ffffff',.25)};border-radius:16px">
+            <div style="width:${Math.round(56*ctx.r)}px;height:${Math.round(56*ctx.r)}px;border-radius:12px;background:${ctx.ac};display:flex;align-items:center;justify-content:center;font-size:${Math.round(30*ctx.r)}px;font-weight:900">${it.icon||'&#9679;'}</div>
+            <div style="font-size:${cellFs}px;font-weight:700;line-height:1.25">${it.label||''}</div>
+          </div>`).join('');
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          <div style="font-size:${Math.round(48*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(30*ctx.r)}px">${s.text||''}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:${Math.round(20*ctx.r)}px">${cells}</div>
+        </div>`;
+      },
+      manifesto: (s, ctx) => { // manifesto — emotional closing statement with **bold** emphasis + sign-off badge
+        const text = boldify(s.quote || s.text || '', ctx.ac);
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:50%;transform:translateY(-50%);z-index:3">
+          <div style="font-size:${Math.round(46*ctx.r)}px;font-weight:800;line-height:1.22">${text}</div>
+          ${s.badge?`<div style="margin-top:${Math.round(30*ctx.r)}px">${badgePill(s.badge, ctx)}</div>`:''}
+        </div>`;
+      },
+      recap_checklist: (s, ctx) => { // recap_checklist — utilitarian "save this" checklist card, contrasts manifesto's tone
+        const inner = `<div style="font-size:${Math.round(38*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(22*ctx.r)}px">${s.text||'Збережи собі'}</div>${bulletListHtml(s.items,'icon',ctx)}`;
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          ${cardHtml(inner, {bg:'rgba(255,255,255,.95)', color:'#161616', padding: Math.round(36*ctx.r)+'px'})}
+        </div>`;
+      },
+      price_table: (s, ctx) => { // price_table — striped two-column pricing rows
+        const rows = (s.items||[]).map((it,i)=>priceRowHtml(it.label, it.value, i%2===0, ctx)).join('');
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          ${s.text?`<div style="font-size:${Math.round(44*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(24*ctx.r)}px">${s.text}</div>`:''}
+          ${cardHtml(rows, {bg:'rgba(255,255,255,.95)', color:'#161616', padding:'0'})}
+        </div>`;
+      },
+      section_cover: (s, ctx) => { // section_cover — chapter-divider variant of cover, allows per-slide bg color override
+        return `${s.badge?`<div style="position:absolute;top:${ctx.padTop}px;left:${ctx.padL}px;z-index:3">${badgePill(s.badge, ctx)}</div>`:''}
+          <div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:50%;transform:translateY(-50%);z-index:3">
+            <div style="font-size:${titleSize(s.text, ctx.r)}px;font-weight:900;line-height:1.05">${s.text||''}</div>
+          </div>`;
+      },
+      offer_card: (s, ctx) => { // offer_card — packaged-offer card with pill "included" items and price block
+        const pills = (s.items||[]).map(it => `<span style="display:inline-block;border:2px solid ${ctx.ac};color:${ctx.ac};border-radius:999px;padding:${Math.round(8*ctx.r)}px ${Math.round(18*ctx.r)}px;font-size:${Math.round(22*ctx.r)}px;font-weight:700;margin:0 ${Math.round(8*ctx.r)}px ${Math.round(10*ctx.r)}px 0">${(it && typeof it==='object')?it.label:it}</span>`).join('');
+        const callout = s.calloutText ? `<div style="margin-top:${Math.round(20*ctx.r)}px">${quoteBoxHtml(s.calloutText,'',ctx)}</div>` : '';
+        const price = `<div style="margin-top:${Math.round(28*ctx.r)}px;display:flex;align-items:baseline;gap:${Math.round(16*ctx.r)}px">
+          <span style="font-size:${Math.round(56*ctx.r)}px;font-weight:900;color:${ctx.ac}">${s.price||''}</span>
+          ${s.oldPrice?`<span style="font-size:${Math.round(30*ctx.r)}px;text-decoration:line-through;opacity:.5">${s.oldPrice}</span>`:''}
+        </div>${s.finePrint?`<div style="font-size:${Math.round(20*ctx.r)}px;opacity:.55;margin-top:${Math.round(8*ctx.r)}px">${s.finePrint}</div>`:''}`;
+        const inner = `<div style="font-size:${Math.round(38*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(18*ctx.r)}px">${s.text||''}</div>
+          <div>${pills}</div>${callout}${price}`;
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          ${cardHtml(inner,{bg:'rgba(255,255,255,.96)', color:'#161616', padding: Math.round(36*ctx.r)+'px'})}
+        </div>`;
+      },
+      spec_stack: (s, ctx) => { // spec_stack — vertical stack of bordered spec/KPI boxes
+        const boxes = (s.items||[]).map(it=>specBoxHtml(it.label, it.value, ctx)).join('');
+        const inner = `${s.text?`<div style="font-size:${Math.round(38*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(20*ctx.r)}px">${s.text}</div>`:''}${boxes}`;
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          ${cardHtml(inner,{bg:'rgba(255,255,255,.95)', color:'#161616', padding: Math.round(34*ctx.r)+'px'})}
+        </div>`;
+      },
+      case_study: (s, ctx) => { // case_study — inspired by "Наші клієнти" results-carousel format
+        let trust = '';
+        const tt = s.trustType;
+        if(tt==='screenshot'){
+          trust = `<div style="display:flex;align-items:center;gap:${Math.round(14*ctx.r)}px;background:rgba(255,255,255,.12);border-radius:16px;padding:${Math.round(16*ctx.r)}px;max-width:${Math.round(340*ctx.r)}px">
+            <div style="width:${Math.round(56*ctx.r)}px;height:${Math.round(56*ctx.r)}px;border-radius:50%;background:${ctx.ac};flex:none"></div>
+            <div><div style="width:${Math.round(160*ctx.r)}px;height:${Math.round(12*ctx.r)}px;background:rgba(255,255,255,.6);border-radius:4px;margin-bottom:${Math.round(8*ctx.r)}px"></div><div style="width:${Math.round(110*ctx.r)}px;height:${Math.round(10*ctx.r)}px;background:rgba(255,255,255,.35);border-radius:4px"></div></div>
+          </div>`;
+        } else if(tt==='device'){
+          trust = `<div style="width:${Math.round(180*ctx.r)}px;height:${Math.round(320*ctx.r)}px;border-radius:24px;border:6px solid rgba(255,255,255,.6);overflow:hidden;position:relative">${photoBgHtml(s.trustImage,0)}</div>`;
+        } else if(tt==='document'){
+          trust = `<div style="width:${Math.round(220*ctx.r)}px;background:#fff;color:#222;border-radius:8px;padding:${Math.round(18*ctx.r)}px;transform:rotate(-3deg);box-shadow:0 14px 30px rgba(0,0,0,.3)">
+            <div style="width:60%;height:${Math.round(16*ctx.r)}px;background:${ctx.ac};border-radius:3px;margin-bottom:${Math.round(12*ctx.r)}px"></div>
+            <div style="height:${Math.round(8*ctx.r)}px;background:#ddd;border-radius:2px;margin-bottom:${Math.round(8*ctx.r)}px"></div>
+            <div style="height:${Math.round(8*ctx.r)}px;background:#ddd;border-radius:2px;margin-bottom:${Math.round(8*ctx.r)}px;width:80%"></div>
+            <div style="height:${Math.round(8*ctx.r)}px;background:#ddd;border-radius:2px;width:60%"></div>
+          </div>`;
+        } else if(tt==='certificate'){
+          trust = `<div style="position:relative;width:${Math.round(220*ctx.r)}px;background:#fff;color:#222;border-radius:8px;padding:${Math.round(18*ctx.r)}px;transform:rotate(2deg);box-shadow:0 14px 30px rgba(0,0,0,.3)">
+            <div style="height:${Math.round(8*ctx.r)}px;background:#ddd;border-radius:2px;margin-bottom:${Math.round(8*ctx.r)}px"></div>
+            <div style="height:${Math.round(8*ctx.r)}px;background:#ddd;border-radius:2px;width:70%"></div>
+            <div style="position:absolute;bottom:-${Math.round(14*ctx.r)}px;right:-${Math.round(14*ctx.r)}px;width:${Math.round(56*ctx.r)}px;height:${Math.round(56*ctx.r)}px;border-radius:50%;background:${ctx.ac};border:3px solid #fff"></div>
+          </div>`;
+        } else if(tt==='logos'){
+          trust = (s.trustLogos||[]).map(l=>`<span style="display:inline-block;border:2px solid rgba(255,255,255,.4);border-radius:8px;padding:${Math.round(8*ctx.r)}px ${Math.round(16*ctx.r)}px;font-size:${Math.round(22*ctx.r)}px;font-weight:700;margin:0 ${Math.round(8*ctx.r)}px ${Math.round(8*ctx.r)}px 0">${l}</span>`).join('');
+        } else {
+          trust = badgePill(s.clientName||'', ctx);
+        }
+        const pointA = s.pointA ? `<div style="font-size:${Math.round(24*ctx.r)}px;opacity:.7;margin-bottom:${Math.round(10*ctx.r)}px"><b>Точка А:</b> ${s.pointA}</div>` : '';
+        let body = '';
+        if(s.items2 && s.items2.length){
+          body = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:${Math.round(24*ctx.r)}px;margin-top:${Math.round(20*ctx.r)}px">
+            <div>${s.itemsHeader?`<div style="font-weight:800;opacity:.7;margin-bottom:${Math.round(10*ctx.r)}px">${s.itemsHeader}</div>`:''}${bulletListHtml(s.items,'plain',ctx)}</div>
+            <div>${s.items2Header?`<div style="font-weight:800;opacity:.7;margin-bottom:${Math.round(10*ctx.r)}px">${s.items2Header}</div>`:''}${bulletListHtml(s.items2,'plain',ctx)}</div>
+          </div>`;
+        } else if(s.items && s.items.length){
+          body = `<div style="margin-top:${Math.round(20*ctx.r)}px">${bulletListHtml(s.items,'plain',ctx)}</div>`;
+        } else if(s.body){
+          body = `<div style="margin-top:${Math.round(20*ctx.r)}px;font-size:${Math.round(28*ctx.r)}px;line-height:1.4;opacity:.9">${s.body}</div>`;
+        }
+        const aside = s.aside ? `<div class="hand" style="position:absolute;left:${ctx.padL}px;bottom:${Math.round(ctx.sh*0.06)}px;font-size:${Math.round(30*ctx.r)}px;opacity:.55;z-index:3">${s.aside}</div>` : '';
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">${trust}
+          <div style="font-size:${Math.round(42*ctx.r)}px;font-weight:900;margin-top:${Math.round(26*ctx.r)}px">${s.text||''}</div>
+          ${s.tagline?`<div style="margin-top:${Math.round(12*ctx.r)}px">${badgePill(s.tagline, ctx)}</div>`:''}
+          ${pointA}${body}
+        </div>${aside}`;
+      },
+      typographic_hook: (s, ctx) => { // typographic_hook — HubSpot-style oversized statement, biases aurora/radial bg
+        const raw = s.text || '';
+        const lines = raw.indexOf('\n')>=0 ? raw.split('\n') : [raw];
+        const withHighlight = lines.map(l => s.highlightWord ? highlightWord(l, s.highlightWord, ctx.ac) : l);
+        const html = withHighlight.map(l=>`<div>${l}</div>`).join('');
+        return `${overlappingShapesHtml(ctx)}
+          <div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:50%;transform:translateY(-50%);z-index:3">
+            ${s.audienceLabel?`<div style="font-size:${Math.round(24*ctx.r)}px;font-weight:700;opacity:.65;text-transform:uppercase;letter-spacing:.06em;margin-bottom:${Math.round(18*ctx.r)}px">${s.audienceLabel}</div>`:''}
+            <div style="font-size:${Math.round(56*ctx.r)}px;font-weight:900;line-height:1.08">${html}</div>
+          </div>`;
+      },
+      feature_card: (s, ctx) => { // feature_card — product-update card with overlapping decorative icon badge
+        const badge = s.badge ? `<div style="display:inline-block;background:${ctx.ac};color:#fff;border-radius:6px;padding:${Math.round(6*ctx.r)}px ${Math.round(14*ctx.r)}px;font-size:${Math.round(20*ctx.r)}px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:${Math.round(16*ctx.r)}px">${s.badge}</div>` : '';
+        const icon = s.icon ? `<div style="position:absolute;top:-${Math.round(30*ctx.r)}px;right:${Math.round(30*ctx.r)}px;width:${Math.round(70*ctx.r)}px;height:${Math.round(70*ctx.r)}px;border-radius:16px;background:${ctx.ac};color:#fff;display:flex;align-items:center;justify-content:center;font-size:${Math.round(36*ctx.r)}px;font-weight:900;box-shadow:0 10px 24px rgba(0,0,0,.3)">${s.icon}</div>` : '';
+        const inner = `${badge}<div style="font-size:${Math.round(38*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(18*ctx.r)}px">${s.text||''}</div>${bulletListHtml(s.items, s.itemStyle||'icon', ctx)}`;
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          ${cardHtml(inner,{bg:'rgba(255,255,255,.96)', color:'#161616', padding: Math.round(36*ctx.r)+'px'})}
+          ${icon}
+          ${s.tagline?`<div style="margin-top:${Math.round(20*ctx.r)}px;font-size:${Math.round(26*ctx.r)}px;opacity:.85;font-weight:600">${s.tagline}</div>`:''}
+        </div>`;
+      },
+      cta_button: (s, ctx) => { // cta_button — closing CTA slide, large centered pill-button treatment
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:50%;transform:translateY(-50%);z-index:3;text-align:center">
+          <div style="font-size:${Math.round(46*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(36*ctx.r)}px">${s.text||''}</div>
+          <div>${ctaButtonHtml(s.ctaLabel, s.ctaUrl, ctx)}</div>
+        </div>`;
+      },
+      photo_cover_personal: (s, ctx) => { // photo_cover_personal — provocative influencer-style hook with doodle underline
+        const photo = photoBgHtml(s.photoUrl, 0.35);
+        const underline = `<svg width="${Math.round(220*ctx.r)}" height="${Math.round(30*ctx.r)}" viewBox="0 0 220 30" style="display:block;margin-top:${Math.round(6*ctx.r)}px"><path d="M4,18 C 50,4 90,28 130,14 C 160,4 190,20 216,10" stroke="${ctx.ac}" stroke-width="6" fill="none" stroke-linecap="round"/></svg>`;
+        return `${photo}<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;bottom:${ctx.padBottom}px;z-index:3">
+          <div style="font-size:${Math.round(54*ctx.r)}px;font-weight:900;line-height:1.06;color:${ctx.ac};text-shadow:0 3px 14px rgba(0,0,0,.5)">${s.text||''}</div>
+          ${underline}
+          ${s.doodle?`<div class="hand" style="font-size:${Math.round(34*ctx.r)}px;margin-top:${Math.round(10*ctx.r)}px;opacity:.9">${s.doodle}</div>`:''}
+        </div>`;
+      },
+      sticky_note_offer: (s, ctx) => { // sticky_note_offer — one or two handwritten-header note cards, meme-sticker device
+        const notes = (s.notes && s.notes.length) ? s.notes : [{header: s.text||'', body: bulletListHtml(s.items,'plain',ctx) || (s.text||'')}];
+        const cards = notes.map((n,i)=>`<div style="margin-bottom:${Math.round(22*ctx.r)}px">${stickyNoteHtml(n.header, n.body, ctx, {rotate: i%2===0?-2:2, stickerLabel: (i===0 && s.stickerLabel) ? s.stickerLabel : null})}</div>`).join('');
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">${cards}</div>`;
+      },
+      product_photo_cover: (s, ctx) => { // product_photo_cover — inset "photography card" with light dim for true color
+        const inset = Math.round(ctx.sw*0.05);
+        return `<div style="position:absolute;left:${inset}px;right:${inset}px;top:${inset}px;bottom:${Math.round(ctx.sh*0.22)}px;border-radius:24px;overflow:hidden">${photoBgHtml(s.photoUrl,0.15)}</div>
+          <div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;bottom:${ctx.padBottom}px;z-index:3">
+            <div style="font-size:${Math.round(40*ctx.r)}px;font-weight:900">${s.text||''}</div>
+          </div>`;
+      },
+      circle_photo_frame: (s, ctx) => { // circle_photo_frame — circular crop right-of-center + left-aligned headline
+        const size = Math.round(ctx.sw*0.55);
+        const circle = circlePhotoHtml(s.photoUrl, size, `right:${Math.round(ctx.sw*0.04)}px;top:50%;transform:translateY(-50%)`);
+        return `${circle}<div style="position:absolute;left:${ctx.padL}px;width:${Math.round(ctx.sw*0.4)}px;top:50%;transform:translateY(-50%);z-index:3">
+          ${s.icon?`<div style="font-size:${Math.round(40*ctx.r)}px;color:${ctx.ac};margin-bottom:${Math.round(14*ctx.r)}px">${s.icon}</div>`:''}
+          <div style="font-size:${Math.round(44*ctx.r)}px;font-weight:900;line-height:1.1">${s.text||''}</div>
+        </div>`;
+      },
+      location_card: (s, ctx) => { // location_card — retail storefront card with address/hours block + circular photo
+        const hours = (s.hours||[]).map(h=>`<div>${h}</div>`).join('');
+        const info = `<div style="border:2px solid ${hexAlpha('#ffffff',.3)};border-radius:16px;padding:${Math.round(22*ctx.r)}px;margin-top:${Math.round(20*ctx.r)}px;font-size:${Math.round(26*ctx.r)}px;line-height:1.5">
+          ${s.phone?`<div style="font-weight:800;margin-bottom:${Math.round(8*ctx.r)}px">${s.phone}</div>`:''}${hours}
+        </div>`;
+        const circle = circlePhotoHtml(s.photoUrl, Math.round(ctx.sw*0.34), `right:${Math.round(ctx.sw*0.06)}px;bottom:${Math.round(ctx.sh*0.06)}px`);
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          <div style="font-size:${Math.round(52*ctx.r)}px;font-weight:900">${s.text||''}</div>
+          ${s.address?`<div style="font-size:${Math.round(28*ctx.r)}px;opacity:.85;margin-top:${Math.round(12*ctx.r)}px">${s.address}</div>`:''}
+          ${s.landmark?`<div style="font-size:${Math.round(24*ctx.r)}px;opacity:.6;margin-top:${Math.round(4*ctx.r)}px">${s.landmark}</div>`:''}
+          ${info}
+        </div>${circle}`;
+      },
+      native_text_over_photo: (s, ctx) => { // native_text_over_photo — deliberately plain "phone camera" caption boxes
+        const photo = photoBgHtml(s.photoUrl, 0.25);
+        const t1 = s.text ? highlightWord(s.text, s.highlightWord, ctx.ac) : '';
+        const box = (txt, top) => txt ? `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${top}px;background:rgba(255,255,255,.92);color:#161616;border-radius:10px;padding:${Math.round(18*ctx.r)}px ${Math.round(22*ctx.r)}px;font-size:${Math.round(30*ctx.r)}px;font-weight:600;z-index:3">${txt}</div>` : '';
+        return `${photo}${box(t1, ctx.padTop)}${box(s.text2, Math.round(ctx.sh*0.65))}`;
+      },
+      before_after: (s, ctx) => { // before_after — split-screen comparison with contrasting muted/bright halves
+        const half = Math.round(ctx.sw/2);
+        const leftBg = s.beforePhoto ? photoBgHtml(s.beforePhoto, 0.45) : `<div style="position:absolute;inset:0;background:${hexAlpha('#000000',.35)}"></div>`;
+        const rightBg = s.afterPhoto ? photoBgHtml(s.afterPhoto, 0.15) : `<div style="position:absolute;inset:0;background:${hexAlpha(ctx.ac,.18)}"></div>`;
+        return `<div style="position:absolute;left:0;top:0;width:${half}px;height:100%;overflow:hidden">${leftBg}
+            <div style="position:absolute;left:${Math.round(30*ctx.r)}px;bottom:${ctx.padBottom}px;right:${Math.round(20*ctx.r)}px;z-index:3">
+              <div style="font-size:${Math.round(24*ctx.r)}px;font-weight:800;opacity:.7;text-transform:uppercase;letter-spacing:.06em">${s.beforeLabel||'До'}</div>
+              <div style="font-size:${Math.round(28*ctx.r)}px;font-weight:600;margin-top:${Math.round(10*ctx.r)}px">${s.beforeText||''}</div>
+            </div></div>
+          <div style="position:absolute;right:0;top:0;width:${half}px;height:100%;overflow:hidden">${rightBg}
+            <div style="position:absolute;right:${Math.round(30*ctx.r)}px;bottom:${ctx.padBottom}px;left:${Math.round(20*ctx.r)}px;z-index:3;text-align:right">
+              <div style="font-size:${Math.round(24*ctx.r)}px;font-weight:800;color:${ctx.ac};text-transform:uppercase;letter-spacing:.06em">${s.afterLabel||'Після'}</div>
+              <div style="font-size:${Math.round(28*ctx.r)}px;font-weight:600;margin-top:${Math.round(10*ctx.r)}px">${s.afterText||''}</div>
+            </div></div>
+          <div style="position:absolute;left:${half-2}px;top:0;width:4px;height:100%;background:rgba(255,255,255,.5);z-index:4"></div>`;
+      },
+      interface_walkthrough: (s, ctx) => { // interface_walkthrough — screenshot device-frame with coordinate callout markers
+        const inset = Math.round(ctx.sw*0.08);
+        const frameTop = Math.round(ctx.sh*0.22);
+        const frameH = Math.round(ctx.sh*0.62);
+        const callouts = (s.callouts||[]).map(c => {
+          const x = Math.round(ctx.sw*(c.x/100));
+          const y = Math.round(ctx.sh*(c.y/100));
+          return `<div style="position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%);z-index:5">
+            <div style="width:${Math.round(30*ctx.r)}px;height:${Math.round(30*ctx.r)}px;border-radius:50%;border:4px solid ${ctx.ac};background:${hexAlpha(ctx.ac,.25)}"></div>
+            <div style="margin-top:${Math.round(6*ctx.r)}px;background:${ctx.ac};color:#fff;font-size:${Math.round(20*ctx.r)}px;font-weight:700;border-radius:6px;padding:${Math.round(4*ctx.r)}px ${Math.round(10*ctx.r)}px;white-space:nowrap">${c.label||''}</div>
+          </div>`;
+        }).join('');
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+            <div style="font-size:${Math.round(38*ctx.r)}px;font-weight:900">${s.text||''}</div>
+          </div>
+          <div style="position:absolute;left:${inset}px;right:${inset}px;top:${frameTop}px;height:${frameH}px;border-radius:20px;border:${Math.round(10*ctx.r)}px solid rgba(255,255,255,.85);overflow:hidden;background:#111">${photoBgHtml(s.screenshotUrl,0.05)}</div>
+          ${callouts}`;
+      },
+      versus_matrix: (s, ctx) => { // versus_matrix — old-way vs new-way comparison table with tinted columns
+        const rows = (s.rows||[]).map((row,i)=>`<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:${i%2===0?hexAlpha('#000000',.04):'transparent'};padding:${Math.round(14*ctx.r)}px ${Math.round(18*ctx.r)}px;font-size:${Math.round(24*ctx.r)}px">
+            <div style="opacity:.75">${row.label||''}</div>
+            <div style="background:${hexAlpha('#ef4444',.12)};padding:${Math.round(4*ctx.r)}px ${Math.round(8*ctx.r)}px;border-radius:6px">${row.left||''}</div>
+            <div style="background:${hexAlpha(ctx.ac,.15)};padding:${Math.round(4*ctx.r)}px ${Math.round(8*ctx.r)}px;border-radius:6px;font-weight:700">${row.right||''}</div>
+          </div>`).join('');
+        const header = `<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;font-weight:900;padding:${Math.round(12*ctx.r)}px ${Math.round(18*ctx.r)}px;font-size:${Math.round(24*ctx.r)}px">
+            <div></div><div>${s.leftHeader||''}</div><div style="color:${ctx.ac}">${s.rightHeader||''}</div>
+          </div>`;
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3">
+          ${cardHtml(header+rows, {bg:'rgba(255,255,255,.95)', color:'#161616', padding:'0'})}
+        </div>`;
+      },
+      interactive_quiz: (s, ctx) => { // interactive_quiz — poll-style "this or that" prompt, minimal decoration, huge type
+        return `<div style="position:absolute;left:${ctx.padL}px;right:${ctx.padR}px;top:${ctx.padTop}px;z-index:3;text-align:center">
+          <div style="font-size:${Math.round(46*ctx.r)}px;font-weight:900;margin-bottom:${Math.round(40*ctx.r)}px">${s.text||''}</div>
+          <div style="display:flex;gap:${Math.round(20*ctx.r)}px">
+            <div style="flex:1;border:3px solid ${hexAlpha('#ffffff',.6)};border-radius:20px;padding:${Math.round(30*ctx.r)}px;font-size:${Math.round(34*ctx.r)}px;font-weight:800">${s.optionA||''}</div>
+            <div style="flex:1;border:3px solid ${ctx.ac};border-radius:20px;padding:${Math.round(30*ctx.r)}px;font-size:${Math.round(34*ctx.r)}px;font-weight:800">${s.optionB||''}</div>
+          </div>
+        </div>`;
+      }
+    };
+
+    // note: photo_cover_personal / product_photo_cover / native_text_over_photo / before_after / interface_walkthrough
+    // primarily show a real photo, but the s-bg/s-bgg flat/gradient layers below are rendered for every role
+    // unconditionally, so those slides still get a fallback background if photoUrl is absent.
+
+    slides.forEach((s, idx) => {
+      const el = document.createElement('section');
+      el.className = 'slide';
+      el.style.width  = sw + 'px';
+      el.style.height = sh + 'px';
+
+      const role = s.role || 'cover';
+      let bgStyleLocal = s.bgStyle || bgStyle;
+      if(!s.bgStyle && role==='typographic_hook') bgStyleLocal = data.bgStyle || 'aurora';
+      const slideBg = s.bgColorOverride || bg;
+      const { bgcStyle, bggStyle } = bgStyleCss(bgStyleLocal, slideBg, ac);
+
+      const padTop    = Math.round(sh*0.10);
+      const padL      = Math.round(sw*0.08);
+      const padR      = Math.round(sw*0.08);
+      const padBottom = Math.round(sh*0.13);
+
+      const ctx = {
+        sw, sh, r, bg: slideBg, ac, fg,
+        bgStyle: bgStyleLocal, bgcStyle, bggStyle,
+        brandHandle: data.brandHandle || '',
+        padTop, padL, padR, padBottom,
+        idx, total: slides.length
+      };
+
+      const renderer = ROLE_RENDERERS[role] || ROLE_RENDERERS.cover;
+      const bodyHtml = renderer(s, ctx);
+
+      const showSwipe = (idx===0 && s.showSwipeHint!==false);
+      const swipeHtml = showSwipe ? swipeArrowHtml(ctx) : '';
+
+      el.innerHTML = `
+        <div class="s-bg" style="${bgcStyle}"></div>
+        <div class="s-bgg" style="${bggStyle}"></div>
+        ${bodyHtml}
+        ${counterHtml(idx, slides.length, ctx)}
+        ${watermarkHtml(ctx)}
+        ${swipeHtml}
+      `;
+      row.appendChild(el);
+    });
+  </script>
+</body>
+</html>
